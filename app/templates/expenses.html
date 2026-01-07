@@ -1,3 +1,4 @@
+<!-- app/templates/expenses.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,18 +8,28 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        .chart-box {
-            height: 300px;
-            position: relative;
-        }
+        .chart-box { height: 300px; position: relative; }
     </style>
 </head>
-
 <body class="bg-light">
 
 <div class="container mt-5">
     <h2>{{ username }}'s Expenses</h2>
-    <p class="text-muted">You can add, view, and manage your expenses here.</p>
+    <p class="text-muted">Add, view, and manage your expenses.</p>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+        <div class="alert alert-{{ category }} mt-3">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Back to Dashboard Button -->
+    <div class="mb-3">
+        <a href="{{ url_for('auth.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
 
     <!-- Add Expense Form -->
     <div class="card p-4 mt-3 shadow-sm">
@@ -62,6 +73,7 @@
                     <th>Amount</th>
                     <th>Category</th>
                     <th>Date</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -71,6 +83,12 @@
                     <td>${{ "%.2f"|format(exp.amount) }}</td>
                     <td>{{ exp.category or "Uncategorized" }}</td>
                     <td>{{ exp.date.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('expense.remove_expense', expense_id=exp.id) }}" 
+                              onsubmit="return confirm('Are you sure you want to remove this expense?');">
+                            <button class="btn btn-danger btn-sm">Remove</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -101,61 +119,22 @@
 </div>
 
 <script>
-    // Read safe data
+    // Chart data
     const pieCanvas = document.getElementById('pieChart');
     const labels = JSON.parse(pieCanvas.dataset.labels || '[]');
     const values = JSON.parse(pieCanvas.dataset.values || '[]');
 
-    // PIE CHART
     new Chart(pieCanvas.getContext('2d'), {
         type: 'pie',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: values,
-                backgroundColor: [
-                    '#4bc0c0',
-                    '#ff6384',
-                    '#ffce56',
-                    '#36a2eb',
-                    '#9966ff',
-                    '#c9cbcf'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'bottom' }
-            }
-        }
+        data: { labels: labels, datasets: [{ data: values, backgroundColor: ['#4bc0c0','#ff6384','#ffce56','#36a2eb','#9966ff','#c9cbcf'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
     });
 
-    // BAR CHART
     const barCanvas = document.getElementById('barChart');
     new Chart(barCanvas.getContext('2d'), {
         type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Total Amount ($)',
-                data: values,
-                backgroundColor: '#36a2eb'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: value => '$' + value
-                    }
-                }
-            }
-        }
+        data: { labels: labels, datasets: [{ label: 'Total Amount ($)', data: values, backgroundColor: '#36a2eb' }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v } } } }
     });
 </script>
 

@@ -34,3 +34,31 @@ def login_user(data):
         return {"success": False, "error": "Invalid credentials"}
 
     return {"success": True}
+
+def get_user_by_username(username):
+    return User.query.filter_by(username=username).first()
+
+def update_user(username, new_email=None, new_password=None,
+                daily_limit=None, monthly_limit=None, yearly_limit=None):
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return {"success": False, "message": "User not found."}
+
+    # Update fields if provided
+    if new_email:
+        user.email = new_email
+    if new_password:
+        user.password_hash = generate_password_hash(new_password)
+    if daily_limit is not None:
+        user.daily_limit = daily_limit
+    if monthly_limit is not None:
+        user.monthly_limit = monthly_limit
+    if yearly_limit is not None:
+        user.yearly_limit = yearly_limit
+
+    try:
+        db.session.commit()
+        return {"success": True, "message": "Profile updated successfully."}
+    except Exception as e:
+        db.session.rollback()
+        return {"success": False, "message": f"Error updating profile: {str(e)}"}
