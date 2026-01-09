@@ -43,44 +43,41 @@
     <div class="mt-4">
         <h4>Spending Progress</h4>
 
-        {% set daily_pct = (daily_spent / daily_limit * 100) if daily_limit > 0 else 0 %}
-        {% set daily_bar_pct = daily_pct if daily_pct <= 100 else 100 %}
+        <!-- Daily -->
         <div class="progress-container">
             <div class="progress-label">Daily Limit</div>
             <div class="limit-info">${{ "%.2f"|format(daily_spent) }} of ${{ "%.2f"|format(daily_limit) }}</div>
             <div class="progress">
                 <div class="progress-bar bg-success" role="progressbar"
-                     style="width: {{ daily_bar_pct }}%"
-                     aria-valuenow="{{ daily_bar_pct }}" aria-valuemin="0" aria-valuemax="100">
-                    {{ daily_pct | round(0) }}%
+                     style="width: {{ daily_pct }}%"
+                     aria-valuenow="{{ daily_pct }}" aria-valuemin="0" aria-valuemax="100">
+                    {{ daily_pct }}%
                 </div>
             </div>
         </div>
 
-        {% set monthly_pct = (monthly_spent / monthly_limit * 100) if monthly_limit > 0 else 0 %}
-        {% set monthly_bar_pct = monthly_pct if monthly_pct <= 100 else 100 %}
+        <!-- Monthly -->
         <div class="progress-container">
             <div class="progress-label">Monthly Limit</div>
             <div class="limit-info">${{ "%.2f"|format(monthly_spent) }} of ${{ "%.2f"|format(monthly_limit) }}</div>
             <div class="progress">
                 <div class="progress-bar bg-info" role="progressbar"
-                     style="width: {{ monthly_bar_pct }}%"
-                     aria-valuenow="{{ monthly_bar_pct }}" aria-valuemin="0" aria-valuemax="100">
-                    {{ monthly_pct | round(0) }}%
+                     style="width: {{ monthly_pct }}%"
+                     aria-valuenow="{{ monthly_pct }}" aria-valuemin="0" aria-valuemax="100">
+                    {{ monthly_pct }}%
                 </div>
             </div>
         </div>
 
-        {% set yearly_pct = (yearly_spent / yearly_limit * 100) if yearly_limit > 0 else 0 %}
-        {% set yearly_bar_pct = yearly_pct if yearly_pct <= 100 else 100 %}
+        <!-- Yearly -->
         <div class="progress-container">
             <div class="progress-label">Yearly Limit</div>
             <div class="limit-info">${{ "%.2f"|format(yearly_spent) }} of ${{ "%.2f"|format(yearly_limit) }}</div>
             <div class="progress">
                 <div class="progress-bar bg-warning" role="progressbar"
-                     style="width: {{ yearly_bar_pct }}%"
-                     aria-valuenow="{{ yearly_bar_pct }}" aria-valuemin="0" aria-valuemax="100">
-                    {{ yearly_pct | round(0) }}%
+                     style="width: {{ yearly_pct }}%"
+                     aria-valuenow="{{ yearly_pct }}" aria-valuemin="0" aria-valuemax="100">
+                    {{ yearly_pct }}%
                 </div>
             </div>
         </div>
@@ -121,8 +118,9 @@
             <p class="text-muted">No expenses yet. Add your first one!</p>
         {% endif %}
 
-        <!-- Button to go to full Expenses page -->
-        <a href="{{ url_for('expense.expenses') }}" class="btn btn-success mt-3">Add/Remove/View All Expenses</a>
+        <!-- Buttons -->
+        <a href="{{ url_for('expense.expenses') }}" class="btn btn-success mt-3 me-2">Add/Remove/View All Expenses</a>
+        <a href="{{ url_for('recurring.recurring_expenses') }}" class="btn btn-warning mt-3">Manage Recurring Expenses</a>
     </div>
 </div>
 
