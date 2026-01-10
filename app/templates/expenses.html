@@ -4,137 +4,230 @@
 <head>
     <meta charset="UTF-8">
     <title>Expenses | Expense Tracker</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        .chart-box { height: 300px; position: relative; }
+        body {
+            background: linear-gradient(135deg, #f8f9fa, #eef2f7);
+        }
+
+        .page-title span {
+            color: #0d6efd;
+        }
+
+        .dashboard-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        .chart-box {
+            height: 300px;
+            position: relative;
+        }
+
+        .action-btn {
+            border-radius: 14px;
+            font-weight: 600;
+        }
+
+        .table th {
+            font-weight: 600;
+        }
     </style>
 </head>
-<body class="bg-light">
+
+<body>
 
 <div class="container mt-5">
-    <h2>{{ username }}'s Expenses</h2>
-    <p class="text-muted">Add, view, and manage your expenses.</p>
 
-    <!-- Flash messages -->
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="page-title fw-bold">
+                <i class="bi bi-receipt"></i>
+                <span>{{ username }}</span>'s Expenses
+            </h2>
+            <p class="text-muted">Add, view, and manage all your expenses in one place.</p>
+        </div>
+
+        <a href="{{ url_for('auth.dashboard') }}" class="btn btn-outline-secondary action-btn">
+            <i class="bi bi-arrow-left"></i> Dashboard
+        </a>
+    </div>
+
+    <!-- FLASH MESSAGES -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, msg in messages %}
-        <div class="alert alert-{{ category }} mt-3">{{ msg }}</div>
+        <div class="alert alert-{{ category }} shadow-sm rounded-3">
+            <i class="bi bi-info-circle me-1"></i> {{ msg }}
+        </div>
         {% endfor %}
       {% endif %}
     {% endwith %}
 
-    <!-- Back to Dashboard Button -->
-    <div class="mb-3">
-        <a href="{{ url_for('auth.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
-    </div>
+    <div class="row g-4">
 
-    <!-- Add Expense Form -->
-    <div class="card p-4 mt-3 shadow-sm">
-        <form method="POST">
-            <div class="mb-3">
-                <label class="form-label">Expense Description</label>
-                <input type="text" class="form-control" name="description" required>
-            </div>
+        <!-- ADD EXPENSE -->
+        <div class="col-lg-4">
+            <div class="card dashboard-card p-4 h-100">
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-plus-circle me-1"></i> Add New Expense
+                </h5>
 
-            <div class="mb-3">
-                <label class="form-label">Amount</label>
-                <input type="number" class="form-control" name="amount" step="0.01" required>
-            </div>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control" name="description" required>
+                    </div>
 
-            <div class="mb-3">
-                <label class="form-label">Category</label>
-                <select class="form-select" name="category">
-                    <option value="">Uncategorized</option>
-                    <option>Food</option>
-                    <option>Transport</option>
-                    <option>Entertainment</option>
-                    <option>Shopping</option>
-                    <option>Bills</option>
-                    <option>Other</option>
-                </select>
-            </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount</label>
+                        <input type="number" class="form-control" name="amount" step="0.01" required>
+                    </div>
 
-            <button class="btn btn-success w-100">Add Expense</button>
-        </form>
-    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" name="category">
+                            <option value="">Uncategorized</option>
+                            <option>Food</option>
+                            <option>Transport</option>
+                            <option>Entertainment</option>
+                            <option>Shopping</option>
+                            <option>Bills</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
 
-    <!-- Expenses Table -->
-    <div class="mt-4">
-        <h5>Existing Expenses</h5>
-
-        {% if expenses %}
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Description</th>
-                    <th>Amount</th>
-                    <th>Category</th>
-                    <th>Date</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for exp in expenses %}
-                <tr>
-                    <td>{{ exp.description }}</td>
-                    <td>${{ "%.2f"|format(exp.amount) }}</td>
-                    <td>{{ exp.category or "Uncategorized" }}</td>
-                    <td>{{ exp.date.strftime('%Y-%m-%d') }}</td>
-                    <td>
-                        <form method="POST" action="{{ url_for('expense.remove_expense', expense_id=exp.id) }}" 
-                              onsubmit="return confirm('Are you sure you want to remove this expense?');">
-                            <button class="btn btn-danger btn-sm">Remove</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-            <p class="text-muted">No expenses yet.</p>
-        {% endif %}
-    </div>
-
-    <!-- Charts -->
-    <div class="row mt-5">
-        <div class="col-md-6 text-center">
-            <h5>Expenses by Category</h5>
-            <div class="chart-box">
-                <canvas id="pieChart"
-                        data-labels='{{ category_labels | tojson }}'
-                        data-values='{{ category_values | tojson }}'></canvas>
+                    <button class="btn btn-success w-100 action-btn">
+                        <i class="bi bi-check-circle"></i> Add Expense
+                    </button>
+                </form>
             </div>
         </div>
 
-        <div class="col-md-6 text-center">
-            <h5>Spending per Category</h5>
-            <div class="chart-box">
-                <canvas id="barChart"></canvas>
+        <!-- EXPENSES TABLE -->
+        <div class="col-lg-8">
+            <div class="card dashboard-card p-4 h-100">
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-list-ul me-1"></i> Existing Expenses
+                </h5>
+
+                {% if expenses %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Category</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exp in expenses %}
+                            <tr>
+                                <td>{{ exp.description }}</td>
+                                <td class="fw-semibold">${{ "%.2f"|format(exp.amount) }}</td>
+                                <td>{{ exp.category or "Uncategorized" }}</td>
+                                <td>{{ exp.date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <form method="POST"
+                                          action="{{ url_for('expense.remove_expense', expense_id=exp.id) }}"
+                                          onsubmit="return confirm('Are you sure you want to remove this expense?');">
+                                        <button class="btn btn-danger btn-sm">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    <p class="text-muted">No expenses yet.</p>
+                {% endif %}
             </div>
         </div>
     </div>
+
+    <!-- CHARTS -->
+    <div class="row mt-5 g-4">
+        <div class="col-md-6">
+            <div class="card dashboard-card p-4 text-center">
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-pie-chart-fill me-1"></i> Expenses by Category
+                </h5>
+                <div class="chart-box">
+                    <canvas id="pieChart"
+                            data-labels='{{ category_labels | tojson }}'
+                            data-values='{{ category_values | tojson }}'></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card dashboard-card p-4 text-center">
+                <h5 class="fw-bold mb-3">
+                    <i class="bi bi-bar-chart-line-fill me-1"></i> Spending per Category
+                </h5>
+                <div class="chart-box">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
-    // Chart data
     const pieCanvas = document.getElementById('pieChart');
     const labels = JSON.parse(pieCanvas.dataset.labels || '[]');
     const values = JSON.parse(pieCanvas.dataset.values || '[]');
 
     new Chart(pieCanvas.getContext('2d'), {
         type: 'pie',
-        data: { labels: labels, datasets: [{ data: values, backgroundColor: ['#4bc0c0','#ff6384','#ffce56','#36a2eb','#9966ff','#c9cbcf'] }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: ['#4bc0c0','#ff6384','#ffce56','#36a2eb','#9966ff','#c9cbcf']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
+        }
     });
 
     const barCanvas = document.getElementById('barChart');
     new Chart(barCanvas.getContext('2d'), {
         type: 'bar',
-        data: { labels: labels, datasets: [{ label: 'Total Amount ($)', data: values, backgroundColor: '#36a2eb' }] },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v } } } }
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Total Amount ($)',
+                data: values,
+                backgroundColor: '#36a2eb'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: v => '$' + v }
+                }
+            }
+        }
     });
 </script>
 

@@ -4,42 +4,89 @@
     <meta charset="UTF-8">
     <title>Recurring Expenses | Expense Tracker</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
+    <style>
+        body {
+            background: #f8f9fa;
+        }
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .card-title span {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: normal;
+        }
+
+        .amount {
+            font-weight: bold;
+        }
+
+        .frequency-badge {
+            text-transform: capitalize;
+        }
+
+        .btn-back {
+            border-radius: 30px;
+            padding: 0.5rem 1.2rem;
+            font-weight: 500;
+        }
+
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
     <div class="container">
-        <a class="navbar-brand" href="{{ url_for('auth.dashboard') }}">Expense Tracker</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('auth.profile') }}">Profile</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
-                </li>
-            </ul>
-        </div>
+        <a class="navbar-brand fw-semibold" href="{{ url_for('auth.dashboard') }}">💰 Expense Tracker</a>
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('auth.profile') }}">Profile</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
+            </li>
+        </ul>
     </div>
 </nav>
 
 <div class="container mt-5">
-    <h2>Manage Recurring Expenses</h2>
 
-    <!-- Add Recurring Expense Form -->
+    <!-- Page Header -->
+    <div class="page-header">
+        <h2 class="fw-bold">Recurring Expenses</h2>
+        <p class="text-muted">
+            Track expenses that repeat automatically—daily, monthly, or yearly.
+        </p>
+    </div>
+
+    <!-- Add Recurring Expense -->
     <div class="card mb-4">
         <div class="card-body">
-            <h5 class="card-title">Add New Recurring Expense</h5>
-            <form action="{{ url_for('recurring.add_recurring') }}" method="POST" class="row g-3">
+            <h5 class="card-title">
+                Add New Recurring Expense
+                <span>• subscriptions, bills, memberships</span>
+            </h5>
+
+            <form action="{{ url_for('recurring.add_recurring') }}" method="POST" class="row g-3 mt-2">
                 <div class="col-md-3">
-                    <input type="text" name="title" class="form-control" placeholder="Title" required>
+                    <input type="text" name="title" class="form-control" placeholder="Expense name" required>
                 </div>
+
                 <div class="col-md-2">
-                    <input type="number" step="0.01" name="amount" class="form-control" placeholder="Amount" required>
+                    <input type="number" step="0.01" name="amount" class="form-control" placeholder="Amount ($)" required>
                 </div>
+
                 <div class="col-md-2">
                     <select name="category" class="form-select">
-                        <option value="">Uncategorized</option>
+                        <option value="">Category</option>
                         <option value="Food">Food</option>
                         <option value="Transport">Transport</option>
                         <option value="Entertainment">Entertainment</option>
@@ -48,6 +95,7 @@
                         <option value="Other">Other</option>
                     </select>
                 </div>
+
                 <div class="col-md-2">
                     <select name="frequency" class="form-select" required>
                         <option value="">Frequency</option>
@@ -56,58 +104,84 @@
                         <option value="yearly">Yearly</option>
                     </select>
                 </div>
+
                 <div class="col-md-3">
                     <input type="date" name="start_date" class="form-control" required>
                 </div>
+
                 <div class="col-12">
-                    <button type="submit" class="btn btn-success mt-2">Add Recurring Expense</button>
+                    <button type="submit" class="btn btn-success w-100 mt-2">
+                        ➕ Add Recurring Expense
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- List of Recurring Expenses -->
+    <!-- Current Recurring Expenses -->
     <div class="card">
         <div class="card-body">
             <h5 class="card-title">Current Recurring Expenses</h5>
+
             {% if recurring_items %}
-                <table class="table table-striped mt-2">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Amount</th>
-                            <th>Category</th>
-                            <th>Frequency</th>
-                            <th>Start Date</th>
-                            <th>Last Generated</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div class="table-responsive">
+                    <table class="table align-middle table-striped mt-3">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Title</th>
+                                <th>Amount</th>
+                                <th>Category</th>
+                                <th>Frequency</th>
+                                <th>Start</th>
+                                <th>Last Added</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
                         {% for item in recurring_items %}
-                        <tr>
-                            <td>{{ item.title }}</td>
-                            <td>${{ "%.2f"|format(item.amount) }}</td>
-                            <td>{{ item.category if item.category else "Uncategorized" }}</td>
-                            <td>{{ item.frequency }}</td>
-                            <td>{{ item.start_date.strftime('%Y-%m-%d') }}</td>
-                            <td>{{ item.last_generated.strftime('%Y-%m-%d') if item.last_generated else "Never" }}</td>
-                            <td>
-                                <form action="{{ url_for('recurring.remove_recurring', item_id=item.id) }}" method="POST" onsubmit="return confirm('Remove this recurring expense?');">
-                                    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-                                </form>
-                            </td>
-                        </tr>
+                            <tr>
+                                <td>{{ item.title }}</td>
+                                <td class="amount">${{ "%.2f"|format(item.amount) }}</td>
+                                <td>{{ item.category if item.category else "Uncategorized" }}</td>
+                                <td>
+                                    <span class="badge bg-primary frequency-badge">
+                                        {{ item.frequency }}
+                                    </span>
+                                </td>
+                                <td>{{ item.start_date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {{ item.last_generated.strftime('%Y-%m-%d') if item.last_generated else "Never" }}
+                                </td>
+                                <td class="text-end">
+                                    <form action="{{ url_for('recurring.remove_recurring', item_id=item.id) }}"
+                                          method="POST"
+                                          onsubmit="return confirm('Remove this recurring expense?');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            Remove
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
                         {% endfor %}
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             {% else %}
-                <p class="text-muted">No recurring expenses yet.</p>
+                <div class="text-center text-muted mt-4">
+                    <p>No recurring expenses yet.</p>
+                    <p class="small">Add one above to automate your tracking.</p>
+                </div>
             {% endif %}
         </div>
     </div>
 
-    <a href="{{ url_for('auth.dashboard') }}" class="btn btn-primary mt-3">Back to Dashboard</a>
+    <!-- Back to Dashboard -->
+    <div class="mt-4">
+        <a href="{{ url_for('auth.dashboard') }}" class="btn btn-outline-primary btn-back">
+            ← Dashboard
+        </a>
+    </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
